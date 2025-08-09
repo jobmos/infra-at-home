@@ -1,0 +1,51 @@
+---
+- name: Install various networking tools on Raspberry Pi Zero 2 W
+  hosts: pi_zero_2w_1
+  become: true
+  roles:
+    - pihole
+    # - nginx
+    # - geerlingguy.node_exporter
+    # - prometheus.prometheus.prometheus
+    # - pivpn
+    # - grafana # Doesn't run very well on a 512MB Pi Zero
+  vars:
+    # Pihole config
+    pihole_web_port: 8080
+    pihole_web_password: "" # Empty password means no login screen
+    pihole_upstream_dns_1: 8.8.8.8
+    pihole_upstream_dns_2: 8.8.4.4
+    pihole_dns_subdomain: pihole
+    prometheus_dns_subdomain: prometheus
+    dns_domain: jobmos.net
+    local_dns_records:
+      - "{{ ansible_host }} {{ pihole_dns_subdomain }}.{{ dns_domain }}"
+      - "{{ ansible_host }} {{ prometheus_dns_subdomain }}.{{ dns_domain }}"
+
+    # Node exporter config
+    node_exporter_port: 9100
+    node_exporter_version: "1.9.1"
+    node_exporter_arch: "armv7"
+    node_exporter_host: "localhost"
+
+    # Prometheus config
+    prometheus_port: 9090
+    prometheus_scrape_configs:
+      - job_name: "prometheus"
+        metrics_path: "{{ prometheus_metrics_path }}"
+        static_configs:
+          - targets:
+              - "{{ ansible_fqdn | default(ansible_host) | default('localhost') }}:{{ prometheus_port }}"
+      - job_name: "node"
+        static_configs:
+          - targets: ["{{ node_exporter_host }}:{{ node_exporter_port }}"]
+            labels:
+              group: "node-exporter"
+
+    # PiVPN config
+    pivpn_port: 51820
+    pivpn_user: "{{ ansible_user }}"
+    pivpn_interface: eth0
+    pivpn_dns1: 1.1.1.1
+    pivpn_dns2: 1.0.0.1
+    wireguard_clients: [] # List of client names to create

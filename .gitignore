@@ -1,0 +1,3 @@
+venv/
+vars/secrets.yml
+.env

@@ -1,0 +1,17 @@
+UNATTUPG=1
+RUNLEVEL=5
+SUDO_USER={{ pivpn_user }}
+INSTALL_USER={{ pivpn_user }}
+VPN=wireguard
+pivpnNET=10.6.0.0
+subnetClass=24
+ALLOWED_IPS="0.0.0.0/0, ::0/0"
+pivpnMTU=1420
+pivpnPORT={{ pivpn_port }}
+pivpnDNS1={{ pivpn_dns1 }}
+pivpnDNS2={{ pivpn_dns2 }}
+pivpnHOST={{ ansible_default_ipv4.address }}
+INPUT_CHAIN_EDITED=0
+FORWARD_CHAIN_EDITED=0
+pivpnPERSISTENTKEEPALIVE=25
+UNATTUPG=1

@@ -1,0 +1,85 @@
+---
+- name: Update package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - git
+      - ufw
+    state: present
+
+- name: Check if PiVPN is already installed
+  stat:
+    path: /opt/pivpn
+  register: pivpn_installed
+
+- name: Create PiVPN setup variables file
+  template:
+    src: setupVars.conf.j2
+    dest: /tmp/setupVars.conf
+    mode: "0644"
+  when: not pivpn_installed.stat.exists
+
+- name: Download PiVPN installer
+  get_url:
+    url: https://install.pivpn.io
+    dest: /tmp/install.sh
+    mode: "0755"
+  when: not pivpn_installed.stat.exists
+
+- name: Run PiVPN installer with unattended setup
+  command: bash /tmp/install.sh --unattended /tmp/setupVars.conf
+  when: not pivpn_installed.stat.exists
+  register: pivpn_install_result
+
+- name: Enable and start WireGuard service
+  systemd:
+    name: wg-quick@wg0
+    enabled: yes
+    state: started
+
+- name: Configure UFW for WireGuard
+  ufw:
+    rule: allow
+    port: "{{ pivpn_port }}"
+    proto: udp
+    comment: "WireGuard VPN"
+
+- name: Enable IP forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    reload: yes
+
+- name: Check existing WireGuard clients
+  command: pivpn list
+  register: existing_clients
+  changed_when: false
+  failed_when: false
+
+- name: Create WireGuard clients
+  command: pivpn add -n "{{ item }}" nopass
+  loop: "{{ wireguard_clients }}"
+  when:
+    - wireguard_clients | length > 0
+    - item not in existing_clients.stdout
+  register: client_creation
+  changed_when: client_creation.rc == 0
+
+- name: Get list of client configurations
+  find:
+    paths: /home/{{ pivpn_user }}/configs
+    patterns: "*.conf"
+  register: client_configs
+  when: wireguard_clients | length > 0
+
+- name: Display client configuration locations
+  debug:
+    msg: "Client configuration files are located at: {{ item.path }}"
+  loop: "{{ client_configs.files }}"
+  when: wireguard_clients | length > 0

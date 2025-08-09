@@ -1,0 +1,39 @@
+---
+- name: Update package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install nginx
+  package:
+    name: nginx
+    state: present
+
+- name: Copy the config file from local to server
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
+
+- name: Test nginx configuration
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+
+- name: Start and enable nginx service
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Open firewall for HTTP (port 80)
+  ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+
+- name: Open firewall for HTTPS (port 443)
+  ufw:
+    rule: allow
+    port: "443"
+    proto: tcp

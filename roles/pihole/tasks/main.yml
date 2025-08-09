@@ -1,0 +1,93 @@
+---
+- name: Update package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - git
+    state: present
+
+- name: Check if running on armv6l (Pi Zero architecture)
+  debug:
+    msg: "Running on {{ ansible_architecture }} - Pi Zero 2 W detected"
+  when: ansible_architecture == "armv6l" or ansible_architecture == "aarch64"
+
+- name: Get current IP and interface info
+  setup:
+    gather_subset: network
+
+- name: Show network info
+  debug:
+    msg:
+      - "Current IP: {{ ansible_default_ipv4.address }}"
+      - "Interface: {{ ansible_default_ipv4.interface }}"
+
+- name: Create pihole directory
+  file:
+    path: /etc/pihole
+    state: directory
+
+- name: Create Pi-hole setup variables file to bypass prompts
+  template:
+    src: setupVars.conf.j2
+    dest: /etc/pihole/setupVars.conf
+    mode: "0644"
+
+- name: Download Pi-hole installer
+  get_url:
+    url: https://install.pi-hole.net
+    dest: /tmp/pihole_install.sh
+    mode: "0755"
+
+- name: Run Pi-hole installer (unattended)
+  shell: echo "y" | bash /tmp/pihole_install.sh --unattended 2>&1 | tee /tmp/pihole_install.log
+  register: install_result
+  async: 600 # 10 minutes timeout
+  poll: 15 # Check every 15 seconds
+
+- name: Show installation output if it failed
+  debug:
+    var: install_result.stdout_lines
+  when: install_result is defined and install_result.rc != 0
+
+- name: Check installation log if install failed
+  slurp:
+    src: /tmp/pihole_install.log
+  register: install_log
+  when: install_result is defined and install_result.rc != 0
+
+- name: Set Pi-hole web interface password
+  shell: pihole setpassword {{ pihole_web_password }}
+  when: pihole_web_password != ""
+
+- name: Set Pi-hole webserver port
+  shell: pihole-FTL --config webserver.port {{ pihole_web_port }}
+
+- name: Set local DNS records
+  ansible.builtin.command:
+    cmd: pihole-FTL --config 'dns.hosts' '{{ local_dns_records | to_json }}'
+  register: ftl_dns_hosts_response
+  changed_when: ftl_dns_hosts_response.rc != 0
+
+- name: Enable and start Pi-hole service
+  systemd:
+    name: pihole-FTL
+    enabled: yes
+    state: started
+
+- name: Display Pi-hole status
+  command: pihole status
+  register: pihole_status
+  changed_when: false
+
+- name: Show Pi-hole installation complete
+  debug:
+    msg:
+      - "Pi-hole installed successfully"
+      - "Access web interface at:"
+      - "http://{{ ansible_default_ipv4.address }}:{{ pihole_web_port }}/admin"
+      - "Use password {{ pihole_web_password }} to log in."
