@@ -1,4 +1,14 @@
-# Ansible infra
+# Infra at home
+
+This repository contains the IaC for my home setup. As this is a new venture,
+the current setup consists of a single Raspberry Pi Zero 2W. 
+This Pi is currently running:
+
+- PiHole with custom DNS records
+- Prometheus for scraping metrics
+- Node exporter to expose CPU, RAM and disk metrics
+- PiVPN with WireGuard to expose the home network to the public
+- NGINX for forwarding subdomain DNS requests to localhost ports
 
 ## Dependencies
 
