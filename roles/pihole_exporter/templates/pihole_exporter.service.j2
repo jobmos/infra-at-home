@@ -2,7 +2,7 @@
 Description=Pihole exporter
 
 [Service]
-ExecStart=/usr/bin/pihole_exporter -pihole_port {{ pihole_web_port }} -pihole_hostname {{ ansible_host }}
+ExecStart=/usr/bin/pihole_exporter -pihole_port {{ pihole_web_port }} -pihole_hostname {{ ansible_host }} -port {{ pihole_exporter_port }}
 Restart=always
 
 [Install]

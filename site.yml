@@ -7,7 +7,7 @@
     # - nginx
     # - geerlingguy.node_exporter
     - pihole_exporter
-    # - prometheus.prometheus.prometheus
+    - prometheus.prometheus.prometheus
     # - pivpn
     # - grafana # Doesn't run very well on a 512MB Pi Zero
   vars:
@@ -31,6 +31,7 @@
 
     # Pihole exporter config
     pihole_exporter_version: "1.2.0"
+    pihole_exporter_port: 9617
 
     # Prometheus config
     prometheus_port: 9090
@@ -45,6 +46,11 @@
           - targets: ["{{ node_exporter_host }}:{{ node_exporter_port }}"]
             labels:
               group: "node-exporter"
+      - job_name: "pihole"
+        static_configs:
+          - targets: ["{{ ansible_host }}:{{ pihole_exporter_port }}"]
+            labels:
+              group: "pihole-exporter"
 
     # PiVPN config
     pivpn_port: 51820
