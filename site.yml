@@ -3,9 +3,10 @@
   hosts: pi_zero_2w_1
   become: true
   roles:
-    - pihole
+    # - pihole
     # - nginx
     # - geerlingguy.node_exporter
+    - pihole_exporter
     # - prometheus.prometheus.prometheus
     # - pivpn
     # - grafana # Doesn't run very well on a 512MB Pi Zero
@@ -27,6 +28,9 @@
     node_exporter_version: "1.9.1"
     node_exporter_arch: "armv7"
     node_exporter_host: "localhost"
+
+    # Pihole exporter config
+    pihole_exporter_version: "1.2.0"
 
     # Prometheus config
     prometheus_port: 9090

@@ -7,6 +7,7 @@ This Pi is currently running:
 - PiHole with custom DNS records
 - Prometheus for scraping metrics
 - Node exporter to expose CPU, RAM and disk metrics
+- PiHole exporter to expose pihole metrics
 - PiVPN with WireGuard to expose the home network to the public
 - NGINX for forwarding subdomain DNS requests to localhost ports
 

@@ -1,0 +1,16 @@
+---
+- name: Download the executable
+  get_url:
+    url: https://github.com/eko/pihole-exporter/releases/download/v{{ pihole_exporter_version }}/pihole_exporter-linux-arm
+    dest: /usr/bin/pihole_exporter
+    mode: "0755"
+
+- template:
+    src: templates/pihole_exporter.service.j2
+    dest: /etc/systemd/system/pihole_exporter.service
+    mode: 0644
+
+- systemd:
+    name: pihole_exporter
+    state: started
+    enabled: True
