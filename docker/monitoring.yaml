@@ -1,0 +1,49 @@
+services:
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.9.1
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+  
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - SOME_PATH/prometheus:/etc/prometheus
+      - prom_data:/prometheus
+
+  grafana:
+    image: grafana/grafana-enterprise:12.1.1
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: watchtower
+    environment:
+      PUID: 1000
+      PGID: 1000
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_MONITOR_ONLY: true
+      WATCHTOWER_NOTIFICATION_URL: discord://SUPER_SECRET_KEY_HERE
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro # To automatically match timezones
+
+volumes:
+  prom_data:
+  grafana-storage:
