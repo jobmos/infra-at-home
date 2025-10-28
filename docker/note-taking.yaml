@@ -1,0 +1,31 @@
+---
+# https://raw.githubusercontent.com/laurent22/joplin/dev/docker-compose.server.yml
+services:
+  database:
+    image: postgres:16
+    volumes:
+      - /home/job/projects/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=PASSWORD_GOES_HERE
+      - POSTGRES_USER=USER_GOES_HERE
+      - POSTGRES_DB=DB_NAME_GOES_HERE
+          
+  joplin:
+    image: joplin/server:3.4.3
+    ports:
+      - "22300:22300"
+    depends_on:
+      - database
+    restart: unless-stopped
+    environment:
+      - APP_PORT=22300
+      - APP_BASE_URL=http://192.168.1.83:22300
+      - DB_CLIENT=pg
+      - POSTGRES_PASSWORD=PASSWORD_GOES_HERE
+      - POSTGRES_DATABASE=DB_NAME_GOES_HERE
+      - POSTGRES_USER=USER_GOES_HERE
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=database
